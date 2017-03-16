@@ -14,6 +14,7 @@
 #import <objc/message.h>
 
 #define force_inline __inline__ __attribute__((always_inline))
+#define ifNilOr(value, replace)  ((value == nil || [value isKindOfClass:[NSNull class]]) ? replace : value)
 
 /// Foundation Class Type
 typedef NS_ENUM (NSUInteger, YYEncodingNSType) {
@@ -797,16 +798,18 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
                 case YYEncodingTypeNSMutableString: {
                     if ([value isKindOfClass:[NSString class]]) {
                         if (meta->_nsType == YYEncodingTypeNSString) {
-                            ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, value);
+                            ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter,
+                                                                           ifNilOr(value, @""));
                         } else {
-                            ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, ((NSString *)value).mutableCopy);
+                            ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter,
+                                                                           ifNilOr(((NSString *)value).mutableCopy, [NSMutableString new]));
                         }
                     } else if ([value isKindOfClass:[NSNumber class]]) {
                         ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model,
                                                                        meta->_setter,
                                                                        (meta->_nsType == YYEncodingTypeNSString) ?
-                                                                       ((NSNumber *)value).stringValue :
-                                                                       ((NSNumber *)value).stringValue.mutableCopy);
+                                                                       ifNilOr(((NSNumber *)value).stringValue , @"") :
+                                                                       ifNilOr(((NSNumber *)value).stringValue.mutableCopy, [NSMutableString new]));
                     } else if ([value isKindOfClass:[NSData class]]) {
                         NSMutableString *string = [[NSMutableString alloc] initWithData:value encoding:NSUTF8StringEncoding];
                         ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, string);
@@ -820,8 +823,8 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
                         ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model,
                                                                        meta->_setter,
                                                                        (meta->_nsType == YYEncodingTypeNSString) ?
-                                                                       ((NSAttributedString *)value).string :
-                                                                       ((NSAttributedString *)value).string.mutableCopy);
+                                                                       ifNilOr(((NSAttributedString *)value).string, [NSAttributedString new]) :
+                                                                       ifNilOr(((NSAttributedString *)value).string.mutableCopy, [NSMutableAttributedString new]));
                     }
                 } break;
                     
@@ -918,19 +921,19 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
                     } else {
                         if ([value isKindOfClass:[NSArray class]]) {
                             if (meta->_nsType == YYEncodingTypeNSArray) {
-                                ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, value);
+                                ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, ifNilOr(value, @[]));
                             } else {
                                 ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model,
                                                                                meta->_setter,
-                                                                               ((NSArray *)value).mutableCopy);
+                                                                               ifNilOr(((NSArray *)value).mutableCopy, [NSMutableArray new]));
                             }
                         } else if ([value isKindOfClass:[NSSet class]]) {
                             if (meta->_nsType == YYEncodingTypeNSArray) {
-                                ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, ((NSSet *)value).allObjects);
+                                ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, ifNilOr(((NSSet *)value).allObjects, [NSSet new]));
                             } else {
                                 ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model,
                                                                                meta->_setter,
-                                                                               ((NSSet *)value).allObjects.mutableCopy);
+                                                                               ifNilOr(((NSSet *)value).allObjects.mutableCopy, [NSMutableSet new]));
                             }
                         }
                     }
@@ -956,11 +959,11 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
                             ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, dic);
                         } else {
                             if (meta->_nsType == YYEncodingTypeNSDictionary) {
-                                ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, value);
+                                ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, ifNilOr(value, @{}));
                             } else {
                                 ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model,
                                                                                meta->_setter,
-                                                                               ((NSDictionary *)value).mutableCopy);
+                                                                               ifNilOr(((NSDictionary *)value).mutableCopy, [NSMutableDictionary new]));
                             }
                         }
                     }
@@ -991,11 +994,11 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
                         ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, set);
                     } else {
                         if (meta->_nsType == YYEncodingTypeNSSet) {
-                            ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, valueSet);
+                            ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, ifNilOr(valueSet, [NSSet new]));
                         } else {
                             ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model,
                                                                            meta->_setter,
-                                                                           ((NSSet *)valueSet).mutableCopy);
+                                                                           ifNilOr(((NSSet *)valueSet).mutableCopy, [NSMutableSet new]));
                         }
                     }
                 } // break; commented for code coverage in next line
